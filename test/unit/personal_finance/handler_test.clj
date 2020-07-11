@@ -1,7 +1,8 @@
 (ns personal-finance.handler-test
-  (:require [midje.sweet :refer :all]
+  (:require [personal-finance.handler :refer :all]
+            [personal-finance.db :as db]
+            [midje.sweet :refer :all]
             [ring.mock.request :as mock]
-            [personal-finance.handler :refer :all]
             [cheshire.core :as json]))
 
 (facts "Output 'Hello World' at root route" :unit
@@ -29,5 +30,17 @@
          (fact "the text body is 'Not Found'"
                (:body response) => "Not Found")))
 
+(facts "Register a revenue transaction of value 10"
+       ;; creates a mock for the function db/register
+       (against-background (db/register {:value 10
+                                         :type  "revenue"})
+                           => {:id 1 :value 10 :type "revenue"})
+       (let [response (app (-> (mock/request :post "/transactions")
+                               ;; creates POST content
+                               (mock/json-body {:value 10 :type "revenue"})))]
+         (fact "the status response is 201"
+               (:status response) => 201)
+         (fact "the body text is a json with the content and an id"
+               (:body response) => "{\"id\":1,\"value\":10,\"type\":\"revenue\"}")))
 
 

@@ -17,6 +17,7 @@
   (fact "The balance is 10 after a revenue transaction of 10" :acceptance
 
         (http/post (route-to "/transactions")
-                   {:body (json/generate-string {:valor 10 :tipo "receita"})})
+                   {:content-type :json
+                    :body (json/generate-string {:value 10 :type "revenue"})})
 
         (json/parse-string (content "/balance") true) => {:balance 10}))
