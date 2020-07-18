@@ -10,6 +10,7 @@
                  [clj-http "3.9.1"]]
   :plugins [[lein-ring "0.12.5"]]
   :ring {:handler personal-finance.handler/app}
+  :uberjar-name "personal-finance.jar"
   :profiles
   {:dev {:dependencies [[javax.servlet/servlet-api "2.5"]
                         [ring/ring-mock "0.3.2"]
