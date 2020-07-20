@@ -15,7 +15,6 @@
 (facts "Starting balance is zero" :unit
        (against-background [(json/generate-string {:balance 0})
                             => "{\"balance\":0}"
-                            ;;mock para chamada db/balance
                             (db/balance) => 0])
 
        (let [response (app (mock/request :get "/balance"))]
@@ -67,6 +66,21 @@
                  (:status response) => 200
                  (:body response) => (json/generate-string {:transactions '({:id 1 :value 2000 :type "revenue"}
                                                                             {:id 2 :value 89 :type "expense"})})))))
+(def book {:id 1 :value 88 :type "expense" :tags ["book" "education"]})
+(def course {:id 2 :value 106 :type "expense" :tags ["course" "education"]})
+(def wage {:id 3 :value 8000 :type "revenue" :tags ["wage"]})
 
+(facts "Filter transactions based on tag search parameters in URL"
+       (against-background
+         [(db/transactions-with-filter {:tags ["book" "course"]}) => [book course]
+          (db/transactions-with-filter {:tags "wage"}) => [wage]]
 
+         (fact "Filter multiples tags"
+               (let [response (app (mock/request :get "/transactions?tags=book&tags=course"))]
+                 (:status response) => 200
+                 (:body response) => (json/generate-string {:transactions [book course]})))
 
+         (fact "Filter one tag"
+               (let [response (app (mock/request :get "/transactions?tags=wage"))]
+                 (:status response) => 200
+                 (:body response) => (json/generate-string {:transactions [wage]})))))
