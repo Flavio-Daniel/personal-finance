@@ -6,10 +6,10 @@
             [personal-finance.db :as db]))
 
 (def random-transactions
-  '({:value 7.0M :type "expense"}
-    {:value 88.0M :type "expense"}
-    {:value 106.0M :type "expense"}
-    {:value 8000.0M :type "revenue"}))
+  '({:value 7.0M :type "expense" :tags ["ice cream" "entertainment"]}
+    {:value 88.0M :type "expense" :tags ["book" "education"]}
+    {:value 106.0M :type "expense" :tags ["course" "education"]}
+    {:value 8000.0M :type "revenue" :tags ["wage"]}))
 
 (against-background
   [(before :facts [(start-server port-default)
@@ -45,5 +45,12 @@
           (count (:transactions (json/parse-string (content "/transactions") true)))
           => 4)
 
-    ))
+    (fact "There is 1 revenue with tag 'wage'"
+          (count (:transactions (json/parse-string (content "/transactions?tags=wage") true))) => 1)
+
+    (fact "There are 2 expenses with with tag 'book' or 'course'"
+          (count (:transactions (json/parse-string (content "/transactions?tags=book&tags=course") true))) => 2)
+
+    (fact "There are 2 expenses with with tag 'education'"
+          (count (:transactions (json/parse-string (content "/transactions?tags=education") true))) => 2)))
 
