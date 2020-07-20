@@ -6,6 +6,13 @@
 (defn transactions []
   @registries)
 
+(defn transactions-with-filter [filters]
+  (let [tags (->> (:tags filters)
+                  (conj [])
+                  (flatten)
+                  (set))]
+    (filter #(some tags (:tags %)) (transactions))))
+
 (defn register [transaction]
   (let [updated-collection (swap! registries conj transaction)]
     (merge transaction {:id (count updated-collection)})))
