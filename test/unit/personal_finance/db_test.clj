@@ -3,11 +3,6 @@
             [midje.sweet :refer :all]
             [personal-finance.db :as db]))
 
-(def random-transactions '({:value 2 :type "expense"}
-                           {:value 10 :type "revenue"}
-                           {:value 200 :type "expense"}
-                           {:value 1000 :type "revenue"}))
-
 (facts "Keep a transaction in an atom"
        (against-background [(before :facts (clean))]
                            (fact "the collection starts empty"
@@ -39,16 +34,56 @@
 
 (facts "filter transactions by type"
 
-       (against-background
-         [(before :facts
-                  [(db/clean)
-                   (doseq [transaction random-transactions]
-                     (db/register transaction))])]
+       (let [random-transactions '({:value 2 :type "expense"}
+                                   {:value 10 :type "revenue"}
+                                   {:value 200 :type "expense"}
+                                   {:value 1000 :type "revenue"})]
 
-         (fact "find only the revenues"
-               (transactions-of-type "revenue") => '({:value 10 :type "revenue"}
-                                                     {:value 1000 :type "revenue"}))
+         (against-background
+           [(before :facts
+                    [(db/clean)
+                     (doseq [transaction random-transactions]
+                       (db/register transaction))])]
 
-         (fact "find only the expenses"
-               (transactions-of-type "expense") => '({:value 2 :type "expense"}
-                                                     {:value 200 :type "expense"}))))
+           (fact "find only the revenues"
+                 (transactions-of-type "revenue") => '({:value 10 :type "revenue"}
+                                                       {:value 1000 :type "revenue"}))
+
+           (fact "find only the expenses"
+                 (transactions-of-type "expense") => '({:value 2 :type "expense"}
+                                                       {:value 200 :type "expense"})))))
+
+(facts "filter transactions by tag"
+
+       (let [random-transactions '({:value 7.0M :type "expense"
+                                    :tags  ["ice cream" "entertainment"]}
+                                   {:value 88.0M :type "expense"
+                                    :tags  ["book" "education"]}
+                                   {:value 106.0M :type "expense"
+                                    :tags  ["course" "education"]}
+                                   {:value 8000.0M :type "revenue"
+                                    :tags  ["wage"]})]
+
+         (against-background
+           [(before :facts
+                    [(db/clean)
+                     (doseq [transaction random-transactions]
+                       (db/register transaction))])]
+
+           (fact "find 1 transaction with tag 'wage'"
+                 (transactions-with-filter {:tags ["wage"]}) => '({:value 8000.0M :type "revenue"
+                                                                   :tags  ["wage"]}))
+
+           (fact "find 2 the transactions with tag 'education'"
+                 (transactions-with-filter {:tags ["education"]}) => '({:value 88.0M :type "expense"
+                                                                        :tags  ["book" "education"]}
+                                                                       {:value 106.0M :type "expense"
+                                                                        :tags  ["course" "education"]}))
+
+           (fact "find 2 the transactions with tag 'book' or 'course'"
+                 (transactions-with-filter {:tags ["book" "course"]}) => '({:value 88.0M :type "expense"
+                                                                            :tags  ["book" "education"]}
+                                                                           {:value 106.0M :type "expense"
+                                                                            :tags  ["course" "education"]}))
+
+           )))
