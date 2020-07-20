@@ -17,7 +17,11 @@
            (GET "/balance" [] (as-json {:balance (db/balance)}))
            (GET "/expenses" [] (as-json {:transactions (db/transactions-of-type "expense")}))
            (GET "/revenues" [] (as-json {:transactions (db/transactions-of-type "revenue")}))
-           (GET "/transactions" [] (as-json {:transactions (db/transactions)}))
+           (GET "/transactions" {filters :params}
+             (as-json {:transactions
+                       (if (empty? filters)
+                         (db/transactions)
+                         (db/transactions-with-filter filters))}))
            (POST "/transactions" request
              (if (transactions/valida? (:body request))
                (-> (db/register (:body request))
